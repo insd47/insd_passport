@@ -1,0 +1,21 @@
+{
+  "nfca": {
+    "identifier": [246, 191, 111, 119],
+    "atqa": [4, 0],
+    "maxTransceiveLength": 253,
+    "sak": 8,
+    "timeout": 618
+  },
+  "mifareclassic": {
+    "identifier": [246, 191, 111, 119],
+    "blockCount": 64,
+    "maxTransceiveLength": 253,
+    "sectorCount": 16,
+    "size": 1024,
+    "timeout": 618,
+    "type": 0
+  },
+  "ndefformatable": {
+    "identifier": [246, 191, 111, 119]
+  }
+}
