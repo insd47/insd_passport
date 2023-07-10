@@ -43,7 +43,8 @@ class AddPage extends StatelessWidget {
       final prefs = await SharedPreferences.getInstance();
       final Uint8List uid = tag.data["nfca"]["identifier"];
 
-      await prefs.setString("id", uid.map((e) => e.toRadixString(16)).join(""));
+      await prefs.setString(
+          "id", uid.map((e) => e.toRadixString(16).padLeft(2, "0")).join());
       onComplete();
     });
 
