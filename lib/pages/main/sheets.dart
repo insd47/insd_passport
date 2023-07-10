@@ -13,6 +13,7 @@ import 'package:insd_passport/components/sheet.dart';
 // pages
 import 'package:insd_passport/pages/info/main.dart';
 import 'package:insd_passport/pages/main/main.dart';
+import 'package:insd_passport/pages/debug/main.dart';
 
 // animations
 import 'package:insd_passport/animations/routes.dart';
@@ -62,13 +63,22 @@ void showMenuSheet(BuildContext context) {
         FutureBuilder(
           future: SharedPreferences.getInstance(),
           builder: (context, snapshot) => snapshot.data?.get("id") != null
-              ? MenuItem(
-                  icon: InsdIcons.exit,
-                  value: "데이터 지우기",
-                  color: colors.secondaryRed,
-                  onPressed: () {
-                    showDeleteAlertSheet(context);
-                  })
+              ? Column(children: [
+                  MenuItem(
+                      icon: InsdIcons.warn,
+                      value: "디버그 메뉴",
+                      onPressed: () {
+                        Navigator.of(context)
+                            .push(insdForwardRoute(context, const DebugPage()));
+                      }),
+                  MenuItem(
+                      icon: InsdIcons.exit,
+                      value: "데이터 지우기",
+                      color: colors.secondaryRed,
+                      onPressed: () {
+                        showDeleteAlertSheet(context);
+                      })
+                ])
               : const SizedBox(),
         ),
         MenuItem(

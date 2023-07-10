@@ -39,6 +39,12 @@ class _MainPageState extends State<MainPage> {
     NfcManager.instance.stopSession();
 
     _refreshCardState();
+
+    channel.setMethodCallHandler((call) async {
+      if (call.method == "nfcStatus") {
+        _refreshCardState();
+      }
+    });
   }
 
   void _refreshCardState() async {
