@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:insd_passport/theme.dart';
 import "package:open_settings/open_settings.dart";
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 import 'dart:math';
 
 // components
@@ -50,25 +52,25 @@ void showAddCardSheet(BuildContext context) {
       ]));
 }
 
-void showMenuSheet(BuildContext context) async {
+void showMenuSheet(BuildContext context) {
   final colors = Theme.of(context).extension<InsdSemanticColors>()!;
+  final height = max(20.0 + MediaQuery.of(context).padding.bottom, 40.0);
 
-  final prefs = await SharedPreferences.getInstance();
-  final id = prefs.getString("id");
-
-  // ignore: use_build_context_synchronously
   showInsdSheet(
       context: context,
       child: Column(children: [
-        id != null
-            ? MenuItem(
-                icon: InsdIcons.exit,
-                value: "데이터 지우기",
-                color: colors.secondaryRed,
-                onPressed: () {
-                  showDeleteAlertSheet(context);
-                })
-            : const SizedBox(),
+        FutureBuilder(
+          future: SharedPreferences.getInstance(),
+          builder: (context, snapshot) => snapshot.data?.get("id") != null
+              ? MenuItem(
+                  icon: InsdIcons.exit,
+                  value: "데이터 지우기",
+                  color: colors.secondaryRed,
+                  onPressed: () {
+                    showDeleteAlertSheet(context);
+                  })
+              : const SizedBox(),
+        ),
         MenuItem(
             icon: InsdIcons.bulb,
             value: "어플리케이션 정보",
@@ -78,8 +80,8 @@ void showMenuSheet(BuildContext context) async {
                   .push(insdForwardRoute(context, const InfoPage()));
             }),
         SizedBox(
-            // ignore: use_build_context_synchronously
-            height: max(20.0 + MediaQuery.of(context).padding.bottom, 40.0)),
+          height: height,
+        )
       ]));
 }
 
@@ -196,27 +198,25 @@ void showDeleteAlertSheet(BuildContext context) {
                 ),
                 const SizedBox(width: 20.0),
                 Expanded(
-                  child: InsdWarnBigButton(
+                    child: FutureBuilder(
+                  future: SharedPreferences.getInstance(),
+                  builder: (context, snapshot) => InsdWarnBigButton(
                     value: "삭제",
-                    onPressed: () async {
-                      final prefs = await SharedPreferences.getInstance();
+                    onPressed: () {
+                      final prefs = snapshot.data as SharedPreferences;
                       prefs.remove("id");
-                      // ignore: use_build_context_synchronously
-                      Navigator.pop(context);
-                      // ignore: use_build_context_synchronously
                       Navigator.pop(context);
 
-                      await Future.delayed(const Duration(milliseconds: 300));
-
-                      // ignore: use_build_context_synchronously
-                      Navigator.of(context).pushAndRemoveUntil(
-                        // ignore: use_build_context_synchronously
-                        insdClearRoute(context, const MainPage()),
-                        (Route<dynamic> route) => false,
-                      );
+                      Future.delayed(const Duration(milliseconds: 160), () {
+                        Navigator.of(context).pushAndRemoveUntil(
+                            insdClearRoute(context, const MainPage()),
+                            (Route<dynamic> route) => false);
+                        Fluttertoast.showToast(
+                            msg: "카드를 삭제했어요.", fontSize: 14.0);
+                      });
                     },
                   ),
-                ),
+                )),
               ],
             )),
         SizedBox(

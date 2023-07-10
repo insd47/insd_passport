@@ -32,8 +32,11 @@ class AddPage extends StatelessWidget {
     final bottomPadding = max(media.padding.bottom + 20.0, 40.0);
 
     void onComplete() {
-      Navigator.pushAndRemoveUntil(context,
-          insdBackwardClearRoute(context, const MainPage()), (route) => false);
+      Navigator.pushAndRemoveUntil(
+          context,
+          insdBackwardClearRoute(
+              context: context, from: const AddPage(), to: const MainPage()),
+          (route) => false);
     }
 
     NfcManager.instance.startSession(onDiscovered: (NfcTag tag) async {
@@ -41,7 +44,6 @@ class AddPage extends StatelessWidget {
       final Uint8List uid = tag.data["nfca"]["identifier"];
 
       await prefs.setString("id", uid.map((e) => e.toRadixString(16)).join(""));
-
       onComplete();
     });
 

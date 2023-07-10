@@ -1,11 +1,10 @@
-import "dart:async";
-
 import "package:flutter/material.dart";
+import "package:flutter/services.dart";
 import "package:open_settings/open_settings.dart";
 import "package:insd_passport/theme.dart";
 import "package:nfc_manager/nfc_manager.dart";
 import "package:shared_preferences/shared_preferences.dart";
-import 'package:receive_intent/receive_intent.dart';
+import "package:nfc_emulator/nfc_emulator.dart";
 import "dart:math";
 
 // Components
@@ -30,50 +29,54 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  String _state = "none";
-
-  void _changeState(String state) {
-    setState(() {
-      _state = state;
-    });
-  }
+  bool _isActive = false;
+  bool _hasCard = false;
+  String _id = "";
 
   @override
   void initState() {
     super.initState();
+    NfcManager.instance.stopSession();
 
-    startService();
-    _startReceiveIntent();
+    _refreshCardState();
+  }
+
+  void _refreshCardState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString("id");
+
+    setState(() {
+      _hasCard = id != null;
+      _id = id ?? "";
+    });
+
+    if (id != null) {
+      final isAvailable = await NfcManager.instance.isAvailable();
+
+      setState(() {
+        _isActive = isAvailable;
+      });
+
+      if (isAvailable) {
+        NfcEmulator.startNfcEmulator("666B65630001", _id);
+      }
+    }
   }
 
   @override
   void dispose() {
-    _sub?.cancel();
+    channel.setMethodCallHandler(null);
+    NfcEmulator.stopNfcEmulator();
+
     super.dispose();
   }
 
-  void startService() async {
-    final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getString("id");
+  void showNoNFCSheetThis() => showNoNFCSheet(context);
 
-    if (id != null) {
-      final isAvailable = await NfcManager.instance.isAvailable();
-      _changeState(isAvailable ? "active" : "inactive");
-    }
-  }
+  void moveToAddPage() =>
+      Navigator.of(context).push(insdForwardRoute(context, const AddPage()));
 
-  StreamSubscription? _sub;
-
-  void _startReceiveIntent() async {
-    print("started sub");
-    _sub = ReceiveIntent.receivedIntentStream.listen((intent) async {
-      print("Action Name:");
-      print(intent?.action);
-      if (intent?.action == "android.nfc.action.ADAPTER_STATE_CHANGED") {
-        startService();
-      }
-    });
-  }
+  static const channel = MethodChannel('dev.insd.app.passport/nfcStatus');
 
   @override
   Widget build(BuildContext context) {
@@ -94,20 +97,20 @@ class _MainPageState extends State<MainPage> {
           alignment: Alignment.topCenter,
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            HeaderCard(state: _state),
-            StatusCard(state: _state),
-            _state != "none"
+            HeaderCard(hasCard: _hasCard, isActive: _isActive),
+            StatusCard(hasCard: _hasCard, isActive: _isActive),
+            _hasCard
                 ? const InfoCard(apart: "부산 아파트", room: "101호", user: "홍길동")
                 : const SizedBox(),
-            _state == "active"
-                ? Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: InsdLinearBigButton(
-                        icon: InsdIcons.reload,
-                        value: "새로고침",
-                        onPressed: () => startService()))
-                : _state == "inactive"
+            _hasCard
+                ? _isActive
                     ? Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: InsdLinearBigButton(
+                            icon: InsdIcons.reload,
+                            value: "새로고침",
+                            onPressed: _refreshCardState))
+                    : Container(
                         margin: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: InsdFilledBigButton(
                           icon: InsdIcons.tag,
@@ -116,26 +119,22 @@ class _MainPageState extends State<MainPage> {
                             OpenSettings.openNFCSetting();
                           },
                         ))
-                    : Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: InsdFilledBigButton(
-                            icon: InsdIcons.plus,
-                            value: "새 카드 추가",
-                            onPressed: () async {
-                              bool isAvailable =
-                                  await NfcManager.instance.isAvailable();
+                : Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: InsdFilledBigButton(
+                        icon: InsdIcons.plus,
+                        value: "새 카드 추가",
+                        onPressed: () async {
+                          bool isAvailable =
+                              await NfcManager.instance.isAvailable();
 
-                              if (isAvailable == false) {
-                                // ignore: use_build_context_synchronously
-                                showNoNFCSheet(context);
-                                return;
-                              }
+                          if (isAvailable == false) {
+                            showNoNFCSheetThis();
+                            return;
+                          }
 
-                              // ignore: use_build_context_synchronously
-                              Navigator.of(context).push(
-                                  // ignore: use_build_context_synchronously
-                                  insdForwardRoute(context, const AddPage()));
-                            })),
+                          moveToAddPage();
+                        })),
             SizedBox(
                 height:
                     max(20.0 + MediaQuery.of(context).padding.bottom, 40.0)),

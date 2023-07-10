@@ -5,9 +5,10 @@ import "package:insd_passport/theme.dart";
 import '../../components/box.dart';
 
 class HeaderCard extends StatelessWidget {
-  final String state;
+  final bool hasCard;
+  final bool isActive;
 
-  const HeaderCard({super.key, this.state = "none"});
+  const HeaderCard({super.key, this.hasCard = false, this.isActive = false});
 
   @override
   Widget build(BuildContext context) {
@@ -16,17 +17,17 @@ class HeaderCard extends StatelessWidget {
 
     final texts = InsdTexts();
 
-    final icon = state == "active"
-        ? InsdIcons.arrow1Up
-        : state == "inactive"
-            ? InsdIcons.tag
-            : InsdIcons.search;
+    final icon = hasCard
+        ? isActive
+            ? InsdIcons.arrow1Up
+            : InsdIcons.tag
+        : InsdIcons.search;
 
-    final infoText = state == "active"
-        ? "휴대폰의 뒷면을\n 카드 리더기에 대세요."
-        : state == "inactive"
-            ? "앱을 사용하려면\n NFC를 켜 주세요."
-            : "카드 정보가\n 등록되지 않았어요.";
+    final infoText = hasCard
+        ? isActive
+            ? "휴대폰의 뒷면을\n 카드 리더기에 대세요."
+            : "앱을 사용하려면\n NFC를 켜 주세요."
+        : "카드 정보가\n 등록되지 않았어요.";
 
     return Expanded(
         child: Column(
@@ -45,9 +46,10 @@ class HeaderCard extends StatelessWidget {
 }
 
 class StatusCard extends StatelessWidget {
-  final String state;
+  final bool hasCard;
+  final bool isActive;
 
-  const StatusCard({super.key, this.state = "none"});
+  const StatusCard({super.key, this.hasCard = false, this.isActive = false});
 
   @override
   Widget build(BuildContext context) {
@@ -56,16 +58,17 @@ class StatusCard extends StatelessWidget {
 
     final texts = InsdTexts();
 
-    final String stateText = state == "active"
-        ? "활성"
-        : state == "inactive"
-            ? "비활성"
-            : "등록되지 않음";
-    final Color stateColor = state == "active"
-        ? colors.secondaryGreen
-        : state == "inactive"
-            ? colors.secondaryRed
-            : colors.textPassive3;
+    final String stateText = hasCard
+        ? isActive
+            ? "활성"
+            : "비활성"
+        : "등록되지 않음";
+
+    final Color stateColor = hasCard
+        ? isActive
+            ? colors.secondaryGreen
+            : colors.secondaryRed
+        : colors.textPassive3;
 
     return Container(
         margin: const EdgeInsets.only(bottom: 20.0),
